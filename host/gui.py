@@ -18,6 +18,8 @@ class App:
         self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix='uart')
         self.results = queue.Queue()
         self.busy = False
+        self.foreground_busy = False
+        self.pending_job = None
         self.closed = False
         self.last_snapshot = None
         self.active_settings = None
@@ -43,6 +45,8 @@ class App:
         ttk.Button(connection, text='Refresh ports', command=self.refresh_ports).pack(side='left', padx=6)
         self.connect_button = ttk.Button(connection, text='Disconnect' if demo else 'Connect', command=self.connect)
         self.connect_button.pack(side='left')
+        self.poll_enabled = tk.BooleanVar(value=True)
+        ttk.Checkbutton(connection, text='Auto-read status', variable=self.poll_enabled).pack(side='right')
         self.refresh_ports()
         settings = ttk.LabelFrame(outer, text='Experiment', padding=14)
         settings.pack(fill='x', pady=14)
@@ -69,7 +73,7 @@ class App:
             button.pack(side='left', padx=(0, 7))
             self.action_buttons.append(button)
         ttk.Button(actions, text='Export snapshot', command=self.export).pack(side='right')
-        ttk.Label(outer, text='Clear + stop, arm the ILA in Vivado, then Apply + restart. Settings apply together on restart.').pack(anchor='w', pady=(8, 12))
+        ttk.Label(outer, text='UART controls the experiment. Arm and view captures separately in Vivado: Clear + stop → arm ILA → Apply + restart.', wraplength=850).pack(anchor='w', pady=(8, 12))
         self.status = tk.StringVar(value='No experiment data yet')
         ttk.Label(outer, textvariable=self.status, font=('Segoe UI', 12, 'bold')).pack(anchor='w')
         self.error_text = tk.StringVar(value='No errors recorded')
@@ -97,15 +101,34 @@ class App:
         self.ports['values'] = ports
         if ports and not self.port.get(): self.port.set(ports[0])
 
-    def set_busy(self, busy):
+    def set_busy(self, busy, *, foreground=None):
         self.busy = busy
+        if foreground is not None:
+            self.foreground_busy = foreground
+        # Background reads must not flash controls or discard a user's click.
         for button in self.action_buttons:
-            button['state'] = 'disabled' if busy or self.device is None else 'normal'
-        self.connect_button['state'] = 'disabled' if busy else 'normal'
+            disabled = self.foreground_busy or self.device is None
+            if button.instate(['disabled']) != disabled:
+                button.state(['disabled'] if disabled else ['!disabled'])
+        if self.connect_button.instate(['disabled']) != self.foreground_busy:
+            self.connect_button.state(['disabled'] if self.foreground_busy else ['!disabled'])
 
-    def submit(self, job, callback):
-        if self.busy or self.closed: return
-        self.set_busy(True)
+    def submit(self, job, callback, *, background=False):
+        if self.closed or self.foreground_busy:
+            return False
+        if self.busy:
+            if background:
+                return False
+            # Keep one foreground command until the read has succeeded. Do not
+            # queue it directly on the worker: a failed read must cancel it.
+            self.pending_job = (job, callback)
+            self.set_busy(True, foreground=True)
+        else:
+            self.dispatch(job, callback, background=background)
+        return True
+
+    def dispatch(self, job, callback, *, background=False):
+        self.set_busy(True, foreground=not background)
         future = self.executor.submit(job)
         future.add_done_callback(lambda f: self.results.put((f, callback)))
 
@@ -116,16 +139,23 @@ class App:
         except queue.Empty:
             pass
         else:
-            self.set_busy(False)
-            try: callback(future.result())
+            try:
+                callback(future.result())
             except Exception as exc:
+                self.pending_job = None
                 self.banner.set(f'Connection / operation error: {exc}')
-                messagebox.showerror('Debug laboratory', str(exc), parent=self.root)
-                # Stop automatic polling after an uncertain hardware command.
                 device, self.device = self.device, None
                 if device: self.executor.submit(device.close)
                 self.connect_button['text'] = 'Connect'
-                self.set_busy(False)
+                self.set_busy(False, foreground=False)
+                messagebox.showerror('Debug laboratory', str(exc), parent=self.root)
+            else:
+                if self.pending_job is not None:
+                    job, callback = self.pending_job
+                    self.pending_job = None
+                    self.dispatch(job, callback)
+                else:
+                    self.set_busy(False, foreground=False)
         self.root.after(50, self.drain)
 
     def connect(self):
@@ -135,7 +165,6 @@ class App:
                 self.device = None
                 self.connect_button['text'] = 'Connect'
                 self.banner.set('Disconnected')
-                self.set_busy(False)
             self.submit(device.close, disconnected)
         else:
             port = self.port.get().strip()
@@ -146,13 +175,13 @@ class App:
                 self.device = device
                 self.connect_button['text'] = 'Disconnect'
                 self.banner.set('PREVIEW — illustrative data, no FPGA connection' if self.demo else f'Connected to {port} · 115200 baud · FPGA identity verified')
-                self.set_busy(False)
             self.submit(lambda: PreviewDevice() if self.demo else Device(port), connected)
 
     def mode_changed(self, _=None):
         self.note.set(NOTES[MODES.index(self.mode.get())])
 
     def start(self):
+        if self.device is None or self.foreground_busy: return
         try:
             settings = Settings(mode=MODES.index(self.mode.get()), **{k:int(v.get(), 0) for k,v in self.fields.items()}).validate()
         except ValueError as exc:
@@ -167,27 +196,30 @@ class App:
     def action(self, name):
         if self.device: self.submit(getattr(self.device, name), self.show_snapshot)
 
-    def poll(self):
-        if self.device: self.submit(self.device.snapshot, self.show_snapshot)
+    def poll(self, *, background=False):
+        if self.device: self.submit(self.device.snapshot, self.show_snapshot, background=background)
 
     def auto_poll(self):
         if self.closed: return
-        if not self.busy and self.device: self.poll()
+        if self.poll_enabled.get() and not self.busy and self.device: self.poll(background=True)
         self.root.after(700, self.auto_poll)
 
     def show_snapshot(self, state):
         self.last_snapshot = state
         mode = state['active_mode']
         mode_name = MODES[mode] if 0 <= mode < len(MODES) else f'Unknown mode {mode}'
-        self.status.set(f'{"Running" if state["status"] & 1 else "Stopped"} · {mode_name}')
+        status = f'{"Running" if state["status"] & 1 else "Stopped"} · {mode_name}'
+        if self.status.get() != status: self.status.set(status)
         errors = [label for i,label in enumerate(ERRORS) if state['errors'] & (1 << i)]
-        self.error_text.set(' | '.join(errors) if errors else 'No errors recorded')
+        error_text = ' | '.join(errors) if errors else 'No errors recorded'
+        if self.error_text.get() != error_text: self.error_text.set(error_text)
         for key in self.table.get_children():
             if key == 'cdc': value = f'{state["cdc_sent"]} / {state["cdc_received"]}'
             elif key.startswith('first_') and not state['errors']: value = '—'
             elif key in ('first_expected','first_actual'): value = f'0x{state[key]:08X}'
             else: value = f'{state[key]:,}'
-            self.table.set(key, 'value', value)
+            if self.table.set(key, 'value') != value:
+                self.table.set(key, 'value', value)
 
     def export(self):
         if self.last_snapshot is None:
@@ -203,6 +235,7 @@ class App:
 
     def close(self):
         self.closed = True
+        self.pending_job = None
         if self.device: self.executor.submit(self.device.close)
         self.executor.shutdown(wait=False, cancel_futures=False)
         self.root.destroy()

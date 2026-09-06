@@ -140,6 +140,10 @@ add_files -fileset constrs_1 [file join $root constraints ${board}.xdc]
 add_files -fileset constrs_1 [file join $root constraints timing.xdc]
 set_property top debug_system_wrapper [current_fileset]
 update_compile_order -fileset sources_1
+if {![llength [get_files -quiet debug_hub_clock.tcl]]} {
+  add_files -fileset utils_1 [file join $root scripts debug_hub_clock.tcl]
+}
+set_property STEPS.OPT_DESIGN.TCL.PRE [file join $root scripts debug_hub_clock.tcl] [get_runs impl_1]
 puts "PROJECT READY: $out/debug_lab.xpr; input clock $input_mhz MHz"
 if {$stage ne "project"} {
   launch_runs synth_1 -jobs 4
@@ -161,6 +165,8 @@ if {$stage ne "project"} {
       set worst [get_timing_paths -delay_type $delay_type -max_paths 1]
       if {[llength $worst] && [get_property SLACK $worst] < 0} {error "Implementation has failing $delay_type timing"}
     }
+    source [file join $root scripts check_debug_clocks.tcl]
+    lab_check_debug_clocks [file join $out debug_clocks.rpt]
     source [file join $root scripts export_probes.tcl]
     lab_export_probes [file join $out debug_lab.ltx]
     file copy -force [file join $out debug_lab.runs impl_1 debug_system_wrapper.bit] [file join $out debug_lab.bit]

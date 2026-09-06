@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
@@ -51,6 +52,11 @@ for board, part in [('arty_s7_50','7s50csga324'), ('sp701','7s100fgga676')]:
     assert 'unconstrained_internal_endpoints (0)' in timing
     skew = (folder/'bus_skew.rpt').read_text()
     assert 'VIOLATED' not in skew and 'Slack (MET)' in skew
+    clocks = (folder/'debug_clocks.rpt').read_text()
+    for pin, period in {'dbg_hub/clk':20.0, 'debug_system_i/ila_fast/clk':20.0,
+                        'debug_system_i/ila_slow/clk':80.0}.items():
+        match = re.search(r'^' + re.escape(pin) + r' period_ns=([0-9.]+)', clocks, re.M)
+        assert match and abs(float(match[1])-period) < 0.01, f'{board}: wrong debug clock: {pin}'
     manifest[board] = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (bit,ltx)}
-    print(f'PASS {board}: AMD IP block design, VHDL sources/wrapper, part, 3 ILAs, complete interface maps, timing and bus skew')
+    print(f'PASS {board}: AMD IP block design, VHDL sources/wrapper, part, 3 ILAs, complete interface maps, timing, bus skew and debug clocks')
 (root/'build'/('artifact_sha256_'+args.board+'.json' if args.board else 'artifact_sha256.json')).write_text(json.dumps(manifest,indent=2),encoding='utf-8')
