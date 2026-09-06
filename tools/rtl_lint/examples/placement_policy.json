@@ -1,0 +1,15 @@
+{
+  "module_policies": [
+    {
+      "entity": "placement_wrapper",
+      "registered_inputs": ["din"],
+      "registered_outputs": ["dout"],
+      "pipelines": [
+        {"from": "din", "to": "in_2", "min_stages": 2, "max_stages": 2,
+         "clock": "clk", "placement": true, "core_port": "core_i.d", "side": "input"},
+        {"from": "core_q", "to": "dout", "min_stages": 2, "max_stages": 2,
+         "clock": "clk", "placement": true, "core_port": "core_i.q", "side": "output"}
+      ]
+    }
+  ]
+}

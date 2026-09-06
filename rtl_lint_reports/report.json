@@ -1,0 +1,495 @@
+{
+  "mode": "source-pattern-review",
+  "files_checked": [
+    "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\legacy_pipeline.v",
+    "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.sv",
+    "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.vhd"
+  ],
+  "files_excluded": [],
+  "findings": [
+    {
+      "rule": "UF007",
+      "severity": "warning",
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.sv",
+      "line": 5,
+      "column": 10,
+      "message": "demo_core.d: automatic I/O review found raw input use before direct register capture; status unregistered. Review whether this boundary should be registered.",
+      "reference": "https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Register-Data-Paths-at-Logical-Boundaries",
+      "language": "SystemVerilog",
+      "source_excerpt": [
+        {
+          "line": 3,
+          "text": "  output wire [W-1:0] q"
+        },
+        {
+          "line": 4,
+          "text": ");"
+        },
+        {
+          "line": 5,
+          "text": "  assign q = ~d;"
+        },
+        {
+          "line": 6,
+          "text": "endmodule"
+        },
+        {
+          "line": 7,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "UF006",
+      "severity": "warning",
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.sv",
+      "line": 3,
+      "column": 23,
+      "message": "demo_core.q: automatic I/O review found no local registered output boundary; review combinational logic or bypass at this output.",
+      "reference": "https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Register-Data-Paths-at-Logical-Boundaries",
+      "language": "SystemVerilog",
+      "source_excerpt": [
+        {
+          "line": 1,
+          "text": "module demo_core #(parameter W = 8) ("
+        },
+        {
+          "line": 2,
+          "text": "  input wire [W-1:0] d,"
+        },
+        {
+          "line": 3,
+          "text": "  output wire [W-1:0] q"
+        },
+        {
+          "line": 4,
+          "text": ");"
+        },
+        {
+          "line": 5,
+          "text": "  assign q = ~d;"
+        }
+      ]
+    },
+    {
+      "rule": "UF007",
+      "severity": "warning",
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.vhd",
+      "line": 8,
+      "column": 3,
+      "message": "demo_core.d: automatic I/O review found raw input use before direct register capture; status unregistered. Review whether this boundary should be registered.",
+      "reference": "https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Register-Data-Paths-at-Logical-Boundaries",
+      "language": "VHDL",
+      "source_excerpt": [
+        {
+          "line": 6,
+          "text": "architecture rtl of demo_core is"
+        },
+        {
+          "line": 7,
+          "text": "begin"
+        },
+        {
+          "line": 8,
+          "text": "  q <= not d;"
+        },
+        {
+          "line": 9,
+          "text": "end architecture;"
+        },
+        {
+          "line": 10,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "rule": "UF006",
+      "severity": "warning",
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.vhd",
+      "line": 4,
+      "column": 46,
+      "message": "demo_core.q: automatic I/O review found no local registered output boundary; review combinational logic or bypass at this output.",
+      "reference": "https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Register-Data-Paths-at-Logical-Boundaries",
+      "language": "VHDL",
+      "source_excerpt": [
+        {
+          "line": 2,
+          "text": "use ieee.std_logic_1164.all;"
+        },
+        {
+          "line": 3,
+          "text": "entity demo_core is"
+        },
+        {
+          "line": 4,
+          "text": "  port (d : in std_logic_vector(7 downto 0); q : out std_logic_vector(7 downto 0));"
+        },
+        {
+          "line": 5,
+          "text": "end entity;"
+        },
+        {
+          "line": 6,
+          "text": "architecture rtl of demo_core is"
+        }
+      ]
+    }
+  ],
+  "source_scope": "Vivado direct synthesis-enabled VHDL/Verilog/SystemVerilog sources; IP and block-design contents are not expanded",
+  "sources_not_linted": [],
+  "module_policies": [],
+  "automatic_architecture": true,
+  "architectures": [
+    {
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\legacy_pipeline.v",
+      "entity": "legacy_pipeline",
+      "architecture": "module",
+      "status": "reviewed",
+      "inputs": {
+        "CLK": {
+          "status": "clock_or_reset_exempt"
+        },
+        "D": {
+          "status": "registered",
+          "capture_registers": [
+            "Stage1"
+          ]
+        }
+      },
+      "outputs": {
+        "Q": {
+          "status": "registered"
+        }
+      },
+      "clocked_signals": [
+        "Stage1",
+        "Stage2"
+      ],
+      "pipeline_chains": [
+        {
+          "from": "D",
+          "to": "Q",
+          "stages": [
+            "Stage1",
+            "Stage2"
+          ],
+          "stage_count": 2,
+          "clock": [
+            "posedge",
+            "CLK"
+          ],
+          "kind": "whole_signal_copy_chain"
+        }
+      ],
+      "wrapper_candidates": [],
+      "notes": [
+        "Pipeline and wrapper absence is informational. Required timing depth, internal child registers and physical placement are not determined."
+      ],
+      "language": "Verilog"
+    },
+    {
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.sv",
+      "entity": "demo_core",
+      "architecture": "module",
+      "status": "reviewed",
+      "inputs": {
+        "d": {
+          "status": "unregistered",
+          "capture_registers": []
+        }
+      },
+      "outputs": {
+        "q": {
+          "status": "unregistered"
+        }
+      },
+      "clocked_signals": [],
+      "pipeline_chains": [],
+      "wrapper_candidates": [],
+      "notes": [
+        "Pipeline and wrapper absence is informational. Required timing depth, internal child registers and physical placement are not determined."
+      ],
+      "language": "SystemVerilog"
+    },
+    {
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.sv",
+      "entity": "placement_wrapper_sv",
+      "architecture": "module",
+      "status": "reviewed",
+      "inputs": {
+        "clk": {
+          "status": "clock_or_reset_exempt"
+        },
+        "din": {
+          "status": "registered",
+          "capture_registers": [
+            "in_1"
+          ]
+        }
+      },
+      "outputs": {
+        "dout": {
+          "status": "registered"
+        }
+      },
+      "clocked_signals": [
+        "in_1",
+        "in_2",
+        "out_1",
+        "out_2"
+      ],
+      "pipeline_chains": [
+        {
+          "from": "core_q",
+          "to": "dout",
+          "stages": [
+            "out_1",
+            "out_2"
+          ],
+          "stage_count": 2,
+          "clock": [
+            "posedge",
+            "clk"
+          ],
+          "kind": "whole_signal_copy_chain"
+        },
+        {
+          "from": "din",
+          "to": "in_2",
+          "stages": [
+            "in_1",
+            "in_2"
+          ],
+          "stage_count": 2,
+          "clock": [
+            "posedge",
+            "clk"
+          ],
+          "kind": "whole_signal_copy_chain"
+        }
+      ],
+      "wrapper_candidates": [
+        {
+          "instance": "core_i",
+          "entity": "demo_core",
+          "status": "registers_on_both_sides",
+          "port_directions": "declared_in_file",
+          "input_paths": [
+            {
+              "core_port": "d",
+              "from": "din",
+              "to": "in_2",
+              "stages": [
+                "in_1",
+                "in_2"
+              ],
+              "stage_count": 2,
+              "clock": [
+                "posedge",
+                "clk"
+              ],
+              "kind": "whole_signal_copy_chain"
+            }
+          ],
+          "output_paths": [
+            {
+              "core_port": "q",
+              "from": "core_q",
+              "to": "dout",
+              "stages": [
+                "out_1",
+                "out_2"
+              ],
+              "stage_count": 2,
+              "clock": [
+                "posedge",
+                "clk"
+              ],
+              "kind": "whole_signal_copy_chain"
+            }
+          ],
+          "placement_intent": "unknown",
+          "missing_shreg_extract_no": []
+        }
+      ],
+      "notes": [
+        "Pipeline and wrapper absence is informational. Required timing depth, internal child registers and physical placement are not determined."
+      ],
+      "language": "SystemVerilog"
+    },
+    {
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.vhd",
+      "entity": "demo_core",
+      "architecture": "rtl",
+      "status": "reviewed",
+      "inputs": {
+        "d": {
+          "status": "unregistered",
+          "capture_registers": []
+        }
+      },
+      "outputs": {
+        "q": {
+          "status": "unregistered"
+        }
+      },
+      "clocked_signals": [],
+      "pipeline_chains": [],
+      "wrapper_candidates": [],
+      "notes": [
+        "Pipeline and wrapper absence is informational. Required timing depth, internal child registers and physical placement are not determined."
+      ]
+    },
+    {
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.vhd",
+      "entity": "placement_wrapper",
+      "architecture": "rtl",
+      "status": "reviewed",
+      "inputs": {
+        "clk": {
+          "status": "clock_or_reset_exempt"
+        },
+        "din": {
+          "status": "registered",
+          "capture_registers": [
+            "in_1"
+          ]
+        }
+      },
+      "outputs": {
+        "dout": {
+          "status": "registered"
+        }
+      },
+      "clocked_signals": [
+        "in_1",
+        "in_2",
+        "out_1",
+        "out_2"
+      ],
+      "pipeline_chains": [
+        {
+          "from": "core_q",
+          "to": "dout",
+          "stages": [
+            "out_1",
+            "out_2"
+          ],
+          "stage_count": 2,
+          "clock": [
+            "rising_edge",
+            "clk"
+          ],
+          "kind": "whole_signal_copy_chain"
+        },
+        {
+          "from": "din",
+          "to": "in_2",
+          "stages": [
+            "in_1",
+            "in_2"
+          ],
+          "stage_count": 2,
+          "clock": [
+            "rising_edge",
+            "clk"
+          ],
+          "kind": "whole_signal_copy_chain"
+        }
+      ],
+      "wrapper_candidates": [
+        {
+          "instance": "core_i",
+          "entity": "demo_core",
+          "status": "registers_on_both_sides",
+          "port_directions": "declared_in_file",
+          "input_paths": [
+            {
+              "core_port": "d",
+              "from": "din",
+              "to": "in_2",
+              "stages": [
+                "in_1",
+                "in_2"
+              ],
+              "stage_count": 2,
+              "clock": [
+                "rising_edge",
+                "clk"
+              ],
+              "kind": "whole_signal_copy_chain"
+            }
+          ],
+          "output_paths": [
+            {
+              "core_port": "q",
+              "from": "core_q",
+              "to": "dout",
+              "stages": [
+                "out_1",
+                "out_2"
+              ],
+              "stage_count": 2,
+              "clock": [
+                "rising_edge",
+                "clk"
+              ],
+              "kind": "whole_signal_copy_chain"
+            }
+          ],
+          "placement_intent": "unknown",
+          "missing_shreg_extract_no": []
+        }
+      ],
+      "notes": [
+        "Pipeline and wrapper absence is informational. Required timing depth, internal child registers and physical placement are not determined."
+      ]
+    }
+  ],
+  "coverage_notes": [
+    {
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\legacy_pipeline.v",
+      "note": "Verilog/SystemVerilog source subset only: no preprocessing, hierarchy elaboration, width/type validation, generated-instance expansion or syntax sign-off."
+    },
+    {
+      "file": "C:\\hdl_projects\\debugging_advanced\\tools\\rtl_lint\\examples\\placement_wrapper.sv",
+      "note": "Verilog/SystemVerilog source subset only: no preprocessing, hierarchy elaboration, width/type validation, generated-instance expansion or syntax sign-off."
+    },
+    {
+      "file": "(policy)",
+      "note": "No explicit module policies: automatic architecture checks run independently when enabled; no required pipeline depth is imposed."
+    }
+  ],
+  "errors": [],
+  "limitation": "Limited VHDL/Verilog/SystemVerilog source patterns only; no syntax validation, elaboration, timing, CDC proof, or inference verification.",
+  "generated_at": "2026-09-05T09:02:07+01:00",
+  "rule_guidance": {
+    "UF006": {
+      "title": "Unregistered module output",
+      "topic": "Register-Data-Paths-at-Logical-Boundaries",
+      "url": "https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Register-Data-Paths-at-Logical-Boundaries",
+      "why": "UG949 recommends registering outputs at logical boundaries to keep timing paths local and easier to analyze.",
+      "action": "For a timing-sensitive boundary, move output combinational logic before an existing output register or add an output register. Keep a deliberate combinational adapter unchanged when latency must remain zero, and document that decision with a targeted waiver.",
+      "verify": "Align data, valid and sideband signals. For ready/valid or AXI interfaces use a protocol-correct register slice or skid-buffer design; never delay ready/valid independently. Check latency in simulation.",
+      "example": "-- Example for a simple synchronous datapath, not an AXI slice.\nprocess(clk)\nbegin\n  if rising_edge(clk) then\n    result_q <= result_comb;\n  end if;\nend process;\nresult_out <= result_q;",
+      "examples": {
+        "VHDL": "-- Example for a simple synchronous datapath, not an AXI slice.\nprocess(clk)\nbegin\n  if rising_edge(clk) then\n    result_q <= result_comb;\n  end if;\nend process;\nresult_out <= result_q;",
+        "Verilog / SystemVerilog": "// Simple datapath example; not an AXI register slice.\nalways @(posedge clk) result_q <= result_comb;\nassign result_out = result_q;"
+      }
+    },
+    "UF007": {
+      "title": "Raw input used before capture",
+      "topic": "Register-Data-Paths-at-Logical-Boundaries",
+      "url": "https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Register-Data-Paths-at-Logical-Boundaries",
+      "why": "UG949 suggests considering registered inputs as well as outputs at hierarchical boundaries.",
+      "action": "If the interface permits an added cycle, capture the synchronous input into a local register and route its internal consumers through that register. Remove unintended raw-input bypasses. A combinational pass-through or monitor may intentionally remain unregistered.",
+      "verify": "A single input register is not a CDC solution. Preserve handshake and sideband alignment; confirm latency and stall behavior before changing the boundary.",
+      "example": "-- Example for a same-clock data input with one-cycle latency.\nprocess(clk)\nbegin\n  if rising_edge(clk) then\n    input_q <= input_data;\n  end if;\nend process;\n-- Use input_q in downstream logic; review any input_data bypass.",
+      "examples": {
+        "VHDL": "-- Example for a same-clock data input with one-cycle latency.\nprocess(clk)\nbegin\n  if rising_edge(clk) then\n    input_q <= input_data;\n  end if;\nend process;\n-- Use input_q in downstream logic; review any input_data bypass.",
+        "Verilog / SystemVerilog": "// Same-clock input; adds a cycle of latency.\nalways @(posedge clk) input_q <= input_data;\n// Use input_q downstream; review raw input_data bypasses."
+      }
+    }
+  }
+}

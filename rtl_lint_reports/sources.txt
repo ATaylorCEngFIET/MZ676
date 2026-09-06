@@ -1,0 +1,3 @@
+C:/hdl_projects/debugging_advanced/tools/rtl_lint/examples/legacy_pipeline.v
+C:/hdl_projects/debugging_advanced/tools/rtl_lint/examples/placement_wrapper.sv
+C:/hdl_projects/debugging_advanced/tools/rtl_lint/examples/placement_wrapper.vhd

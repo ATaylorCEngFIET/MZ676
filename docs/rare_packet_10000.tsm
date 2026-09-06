@@ -1,0 +1,20 @@
+# Rare packet -> earlier stall -> downstream data error.
+# Arm BEFORE restarting the experiment. Use all-cycle capture.
+state wait_packet:
+  if (debug_system_i/experiment_native2 == 32'h00002710) then
+    goto wait_stall;
+  else
+    goto wait_packet;
+  endif
+state wait_stall:
+  if (debug_system_i/experiment_native0 == 32'bxxxxxxxxxxxxxxxxxxxxxxxxxxxx1xxx) then
+    goto wait_error;
+  else
+    goto wait_stall;
+  endif
+state wait_error:
+  if (debug_system_i/experiment_native0 == 32'bxxxxxxxxxxxxxxxxxxx1xxxxxxxxxxxx) then
+    trigger;
+  else
+    goto wait_error;
+  endif

@@ -1,0 +1,9 @@
+build/
+__pycache__/
+*.pyc
+.Xil/
+*.jou
+*.log
+*.str
+*.wdb
+*.pb

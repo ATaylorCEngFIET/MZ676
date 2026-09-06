@@ -1,0 +1,8 @@
+{
+  "reset_pattern": "(?i)(^|_)(rst|reset|areset)(_n|n)?$",
+  "disabled_rules": [],
+  "exclude": [],
+  "waivers": [],
+  "module_policies": [],
+  "automatic_architecture": true
+}

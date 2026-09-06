@@ -1,0 +1,76 @@
+-- Combinational debug adapter: supplies explicit interface metadata to System ILA.
+library ieee;
+use ieee.std_logic_1164.all;
+entity axi_tap is
+  port (
+    clk : in std_logic;
+    m_awaddr : out std_logic_vector(31 downto 0);
+    raw0 : in std_logic_vector(31 downto 0);
+    m_awprot : out std_logic_vector(2 downto 0);
+    raw1 : in std_logic_vector(2 downto 0);
+    m_awvalid : out std_logic;
+    raw2 : in std_logic;
+    m_awready : in std_logic;
+    m_wdata : out std_logic_vector(31 downto 0);
+    raw3 : in std_logic_vector(31 downto 0);
+    m_wstrb : out std_logic_vector(3 downto 0);
+    raw4 : in std_logic_vector(3 downto 0);
+    m_wvalid : out std_logic;
+    raw5 : in std_logic;
+    m_wready : in std_logic;
+    m_bresp : in std_logic_vector(1 downto 0);
+    m_bvalid : in std_logic;
+    m_bready : out std_logic;
+    raw6 : in std_logic;
+    m_araddr : out std_logic_vector(31 downto 0);
+    raw7 : in std_logic_vector(31 downto 0);
+    m_arprot : out std_logic_vector(2 downto 0);
+    raw8 : in std_logic_vector(2 downto 0);
+    m_arvalid : out std_logic;
+    raw9 : in std_logic;
+    m_arready : in std_logic;
+    m_rdata : in std_logic_vector(31 downto 0);
+    m_rresp : in std_logic_vector(1 downto 0);
+    m_rvalid : in std_logic;
+    m_rready : out std_logic;
+    raw10 : in std_logic
+  );
+end entity;
+architecture rtl of axi_tap is
+  attribute X_INTERFACE_INFO : string;
+  attribute X_INTERFACE_PARAMETER : string;
+  attribute X_INTERFACE_INFO of m_awaddr : signal is "xilinx.com:interface:aximm:1.0 MON AWADDR";
+  attribute X_INTERFACE_INFO of m_awprot : signal is "xilinx.com:interface:aximm:1.0 MON AWPROT";
+  attribute X_INTERFACE_INFO of m_awvalid : signal is "xilinx.com:interface:aximm:1.0 MON AWVALID";
+  attribute X_INTERFACE_INFO of m_awready : signal is "xilinx.com:interface:aximm:1.0 MON AWREADY";
+  attribute X_INTERFACE_INFO of m_wdata : signal is "xilinx.com:interface:aximm:1.0 MON WDATA";
+  attribute X_INTERFACE_INFO of m_wstrb : signal is "xilinx.com:interface:aximm:1.0 MON WSTRB";
+  attribute X_INTERFACE_INFO of m_wvalid : signal is "xilinx.com:interface:aximm:1.0 MON WVALID";
+  attribute X_INTERFACE_INFO of m_wready : signal is "xilinx.com:interface:aximm:1.0 MON WREADY";
+  attribute X_INTERFACE_INFO of m_bresp : signal is "xilinx.com:interface:aximm:1.0 MON BRESP";
+  attribute X_INTERFACE_INFO of m_bvalid : signal is "xilinx.com:interface:aximm:1.0 MON BVALID";
+  attribute X_INTERFACE_INFO of m_bready : signal is "xilinx.com:interface:aximm:1.0 MON BREADY";
+  attribute X_INTERFACE_INFO of m_araddr : signal is "xilinx.com:interface:aximm:1.0 MON ARADDR";
+  attribute X_INTERFACE_INFO of m_arprot : signal is "xilinx.com:interface:aximm:1.0 MON ARPROT";
+  attribute X_INTERFACE_INFO of m_arvalid : signal is "xilinx.com:interface:aximm:1.0 MON ARVALID";
+  attribute X_INTERFACE_INFO of m_arready : signal is "xilinx.com:interface:aximm:1.0 MON ARREADY";
+  attribute X_INTERFACE_INFO of m_rdata : signal is "xilinx.com:interface:aximm:1.0 MON RDATA";
+  attribute X_INTERFACE_INFO of m_rresp : signal is "xilinx.com:interface:aximm:1.0 MON RRESP";
+  attribute X_INTERFACE_INFO of m_rvalid : signal is "xilinx.com:interface:aximm:1.0 MON RVALID";
+  attribute X_INTERFACE_INFO of m_rready : signal is "xilinx.com:interface:aximm:1.0 MON RREADY";
+  attribute X_INTERFACE_INFO of clk : signal is "xilinx.com:signal:clock:1.0 clk CLK";
+  attribute X_INTERFACE_PARAMETER of clk : signal is "ASSOCIATED_BUSIF MON";
+  attribute X_INTERFACE_PARAMETER of m_awaddr : signal is "PROTOCOL AXI4LITE, DATA_WIDTH 32, ADDR_WIDTH 32, READ_WRITE_MODE READ_WRITE";
+begin
+  m_awaddr <= raw0;
+  m_awprot <= raw1;
+  m_awvalid <= raw2;
+  m_wdata <= raw3;
+  m_wstrb <= raw4;
+  m_wvalid <= raw5;
+  m_bready <= raw6;
+  m_araddr <= raw7;
+  m_arprot <= raw8;
+  m_arvalid <= raw9;
+  m_rready <= raw10;
+end architecture;
