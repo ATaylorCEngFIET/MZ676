@@ -21,6 +21,8 @@ Choose the FPGA UART COM port, connect, select an experiment, use **Clear + stop
 
 If controls flash or no ILA waveform appears, see [the capture troubleshooting guide](docs/capture_troubleshooting.md). Automatic reads now keep the buttons enabled; the Arty debug hub is explicitly clocked at 50 MHz. The Vivado helper `scripts/hardware_capture.tcl` supplies immediate capture, sticky-error arming and waveform display.
 
+For per-fault trigger setup, source `scripts/ila_recipes.tcl`. See [the Tcl recipe guide](docs/ila_tcl_recipes.md) for all six faults, CDC captures and System ILA bus triggers.
+
 ## Hardware builds
 
 A [ready-to-program Arty S7-50 bitstream and matching LTX](prebuilt/arty_s7_50) include the 50 MHz debug-hub correction.

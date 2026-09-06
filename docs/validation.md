@@ -46,3 +46,5 @@ No physical FPGA UART is connected in this workspace. On-board operation, ILA tr
 Background reads no longer toggle button states and foreground clicks wait for the current read. Six GUI regression tests cover this behavior, including cancelling a queued restart when the read fails. `scripts/hardware_capture.tcl` loads in Vivado 2026.1 and its hardware commands resolve. Real capture, trigger comparison acceptance and waveform display still require on-board testing. See [capture troubleshooting](capture_troubleshooting.md).
 
 The corrected Arty artifact audit passes, including routed clock periods of 20 ns for the hub and fast ILA and 80 ns for the slow ILA. The matching bit/LTX pair, clock report and hashes are published under `prebuilt/arty_s7_50/`.
+
+The per-fault recipes in `scripts/ila_recipes.tcl` load in Vivado 2026.1. Five automated Tcl-boundary tests cover all six event/sticky trigger pairs, CDC completion, all five System ILA recipes and invalid/missing probe cases against the shipped LTX. Run `python -m unittest discover -s scripts -p test_ila_recipes.py`. These checks do not replace on-board ILA testing.

@@ -1,5 +1,7 @@
 # MicroZed Chronicles laboratory guide
 
+Runnable setup commands are in [the Tcl recipe guide](ila_tcl_recipes.md) and `scripts/ila_recipes.tcl`.
+
 ## Common procedure
 
 1. Program the board's matching bitstream and load its LTX.
