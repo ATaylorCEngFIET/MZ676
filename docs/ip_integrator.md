@@ -26,7 +26,7 @@ The generated AMD files may include Verilog or encrypted implementation models. 
 
 `experiment/M_AXIS` connects to `stream_fifo/S_AXIS`. The FIFO's `M_AXIS` returns to `experiment/S_AXIS`. System ILA slots 0 and 1 attach to these actual bus connections. The FIFO is reset on each experiment restart, then traffic waits another 16 clocks for recovery. The VHDL occupancy counter observes accepted transfers; it does not control the vendor FIFO.
 
-The exercise's intentionally faulty AXI target is separate from the UART control bus. Its deadlock therefore leaves the GUI control path operational. System ILA slot 2 observes this exercise. Explicitly wired AXI return signals are included in the LTX by `scripts/export_probes.tcl`; `scripts/audit_artifacts.py` checks the resulting maps.
+The exercise's intentionally faulty AXI target is separate from the UART control bus. Its deadlock therefore leaves the GUI control path operational. System ILA slot 2 observes this exercise. Explicitly wired AXI return signals are included in the LTX by `scripts/export_probes.tcl`.
 
 The two experiment clocks come from the same MMCM and remain related in timing analysis. The CDC exercise demonstrates pulse loss and a corrected VHDL request/acknowledge transfer. The custom CDC logic and AXI target are retained because their faulty and corrected implementations are the teaching material.
 

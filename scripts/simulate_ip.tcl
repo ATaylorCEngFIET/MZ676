@@ -1,4 +1,4 @@
-# Run VHDL tests against generated AMD IP (no AXI VIP or SystemVerilog testbench).
+# Run VHDL testbenches against the generated AMD IP.
 # vivado -mode batch -source scripts/simulate_ip.tcl -tclargs [tb_debug_lab|tb_uart_control]
 set root [file normalize [file join [file dirname [info script]] ..]]
 set top [lindex $argv 0]
@@ -7,7 +7,7 @@ if {$top ni {tb_debug_lab tb_uart_control tb_board_boot}} {error "Unknown testbe
 set project [file join $root build ipi_arty_s7_50 debug_lab.xpr]
 if {![file exists $project]} {error "Generate the Arty IP Integrator project first"}
 open_project $project
-# Separate simulation filesets/output folders for reproducibility.
+# Give each testbench its own simulation fileset.
 set simset ip_$top
 if {[llength [get_filesets -quiet $simset]] == 0} {create_fileset -simset $simset}
 foreach name {stream_fifo_model simulation_fifo} {add_files -fileset $simset [file join $root sim $name.vhd]}

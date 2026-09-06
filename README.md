@@ -19,13 +19,13 @@ python host/gui.py
 
 Choose the FPGA UART COM port, connect, select an experiment, use **Clear + stop**, arm the desired ILA in Vivado, then click **Apply + restart**. Settings are latched together at restart. **Stop** aborts traffic and retains diagnostic counters; **Clear + stop** resets the experiment. Each subsequent restart resets both the experiment and System ILA protocol checkers. Snapshot export saves JSON, including the settings applied through this GUI session.
 
-If controls flash or no ILA waveform appears, see [the capture troubleshooting guide](docs/capture_troubleshooting.md). Automatic reads now keep the buttons enabled; the Arty debug hub is explicitly clocked at 50 MHz. The Vivado helper `scripts/hardware_capture.tcl` supplies immediate capture, sticky-error arming and waveform display.
+Use `scripts/hardware_capture.tcl` for immediate capture, sticky-error triggering and waveform display. See [capture troubleshooting](docs/capture_troubleshooting.md) if no waveform appears.
 
 For per-fault trigger setup, source `scripts/ila_recipes.tcl`. See [the Tcl recipe guide](docs/ila_tcl_recipes.md) for all six faults, CDC captures and System ILA bus triggers.
 
 ## Hardware builds
 
-A [ready-to-program Arty S7-50 bitstream and matching LTX](prebuilt/arty_s7_50) include the 50 MHz debug-hub correction.
+A [prebuilt Arty S7-50 bitstream and matching LTX](prebuilt/arty_s7_50) are provided.
 
 Run these commands from a PowerShell with Vivado on PATH, in this project directory. No downloaded board packages are required.
 
@@ -120,7 +120,7 @@ Generate the Arty project before running `simulate_ip.tcl`. The quick regression
 
 The VHDL tests check healthy traffic, all six fault signatures, removal of necessary fault stimuli, recovery to healthy mode, serial command/readback, checksum rejection, parser timeout/resynchronisation and clear/restart. Python tests cover framing, partial reads, noise, error replies, identity checks, settings validation and no automatic replay of uncertain commands.
 
-Both original board builds passed routed timing in Vivado 2026.1. The September 6 debug-hub correction is rebuilt and audited for Arty S7-50; rebuild SP701 to apply the same correction. Hardware captures still require a connected board. A successful simulation/build is not presented as an on-board test. See [validation results](docs/validation.md) for the actual checks performed.
+The supplied Arty S7-50 image meets timing in Vivado 2026.1. See [validation results](docs/validation.md) for simulation coverage, implementation results and hardware test status.
 
 ## Vendor references
 

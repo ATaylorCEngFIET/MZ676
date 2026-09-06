@@ -4,36 +4,24 @@ The Python application controls fault selection and reads UART status. ILA armin
 JTAG transfers and waveform windows are handled by **Vivado Hardware Manager**.
 Clicking **Apply + restart** alone does not open a waveform.
 
-## Correct the two reported problems
+## Clocks and programming
 
-Automatic status reads previously disabled/re-enabled the GUI buttons every 700 ms.
-They now run in the background, leave controls enabled, and preserve a command
-clicked during a read. **Auto-read status** can also be switched off. A failed read
-cancels a waiting command and disconnects rather than starting an experiment after
-communication has failed.
+The debug hub and fast ILA use the free-running 50 MHz clock. The slow ILA samples
+at 12.5 MHz. AMD requires the debug hub clock to be at least 2.5 times JTAG TCK;
+15 MHz meets that requirement for this build. Try 3 MHz when troubleshooting a
+connection or using an older image whose debug hub may be clocked at 12.5 MHz.
 
-The original routed Arty image had its debug hub on **12.5 MHz**, although the fast
-ILA sampled at 50 MHz. AMD requires a non-Versal debug hub clock at least 2.5 times
-JTAG TCK. Thus that image needs TCK at most 5 MHz; **3 MHz** is a useful diagnostic
-setting. This is a confirmed build defect that can explain capture trouble at a
-15 MHz TCK; the actual board failure has not yet been reproduced here.
-
-The updated build explicitly connects the hub to the free-running **50 MHz** clock,
-checks the routed clock, and supports a 15 MHz TCK within that clock-ratio requirement.
-Other cable/signal issues can still require a lower TCK. The slow ILA continues to
-sample at 12.5 MHz; it does not supply the hub clock.
-
-Use the [prebuilt Arty S7-50 bit/LTX pair](../prebuilt/arty_s7_50) to program the correction directly. To update an existing, successfully synthesized Arty S7-50 project:
+Use the [prebuilt Arty S7-50 bit/LTX pair](../prebuilt/arty_s7_50), or build from source:
 
 ```powershell
-vivado -mode batch -source scripts/rebuild_arty_debug.tcl
-python scripts/audit_artifacts.py --board arty_s7_50
+vivado -mode batch -source scripts/build.tcl -tclargs arty_s7_50 bitstream
 ```
 
-This resets and reruns implementation in `build/ipi_arty_s7_50`. For a clean build,
-use `scripts/build.tcl` as described in the README. Program the newly generated
-`build/ipi_arty_s7_50/debug_lab.bit` and associate the matching `debug_lab.ltx`.
-Changing Python or the Tcl source does not update an already programmed FPGA.
+Program `build/ipi_arty_s7_50/debug_lab.bit` and associate its matching
+`debug_lab.ltx`. Changing Python or Tcl files does not reprogram the FPGA.
+
+GUI status reads run in the background. Disable **Auto-read status** to read only
+on demand. A failed read disconnects the application and cancels any waiting command.
 
 ## Immediate capture: separate transport from trigger conditions
 

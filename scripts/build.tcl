@@ -14,12 +14,12 @@ if {$board eq "arty_s7_50"} {
   if {![string is double -strict $input_mhz] || $input_mhz < 10 || $input_mhz > 450} {error "Invalid Si570 input frequency"}
   set clock_type Differential_clock_capable_pin
 } else {error "Board must be arty_s7_50 or sp701"}
-# New directory prevents an old top-level architecture from being mistaken for this build.
+# Generated project and implementation outputs.
 set out [file join $root build ipi_$board]
 file mkdir $out
 create_project debug_lab $out -part $part -force
 set_property target_language VHDL [current_project]
-# AMD IP can supply encrypted Verilog internally; all project-authored HDL is VHDL.
+# Mixed-language simulation is required by AMD IP libraries.
 set_property simulator_language Mixed [current_project]
 foreach name {lab_pkg occupancy_checker cdc_lab axi_lab debug_lab command_parser uartlite_service control_bd experiment_bd axi_tap} {
   add_files [file join $root rtl ${name}.vhd]
