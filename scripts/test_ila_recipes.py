@@ -28,11 +28,16 @@ class RecipeTests(unittest.TestCase):
                 self.tcl.setvar(f'props({name},CELL_NAME)', name)
         self.tcl.eval('''
             set armed {}
+            set writes {}
             proc current_hw_device {args} {return device}
             proc get_hw_ilas {args} {return [array names ::probes]}
             proc get_hw_probes {args} {return $::probes([lindex $args end])}
             proc get_property {key object} {return $::props($object,$key)}
             proc set_property {key value object} {
+                if {[info exists ::readonly($object,$key)] && $::readonly($object,$key)} {
+                    error "hw_ila property '$key' is read-only."
+                }
+                lappend ::writes [list $object $key $value]
                 if {$key eq "TRIGGER_COMPARE_VALUE"} {
                     if {![regexp {^eq([0-9]+)'b([X01]+)$} $value _ width bits]} {error "Bad mask"}
                     if {$width != $::widths($object) || [string length $bits] != $width} {error "Width mismatch"}
@@ -42,8 +47,14 @@ class RecipeTests(unittest.TestCase):
             proc reset_hw_ila {ila} {
                 foreach p $::probes($ila) {unset -nocomplain ::props($p,TRIGGER_COMPARE_VALUE)}
                 set ::props($ila,RESET_CALLED) 1
+                foreach {key value} {CONTROL.CAPTURE_MODE ALWAYS CONTROL.TRIGGER_POSITION 0 CONTROL.WINDOW_COUNT 1 CONTROL.DATA_DEPTH 1024 CONTROL.TRIGGER_CONDITION AND} {
+                    set ::props($ila,$key) $value
+                }
             }
-            proc run_hw_ila {ila} {lappend ::armed $ila}
+            proc run_hw_ila {args} {lappend ::armed [lindex $args end]}
+            proc wait_on_hw_ila {args} {return}
+            proc upload_hw_ila_data {ila} {return data_$ila}
+            proc display_hw_ila_data {data} {set ::displayed $data}
         ''')
         self.tcl.call('source', str(ROOT/'scripts/ila_recipes.tcl').replace('\\','/'))
 
@@ -88,6 +99,34 @@ class RecipeTests(unittest.TestCase):
             self.check_core('system_ila', position)
             for probe, value in terms.items():
                 self.assertEqual(self.prop('debug_system_i/system_ila/U0/'+probe, 'TRIGGER_COMPARE_VALUE'), value)
+
+    def test_readonly_always_capture_mode(self):
+        core = self.tcl.call('lab_ila','ila_slow')
+        self.tcl.setvar(f'readonly({core},CONTROL.CAPTURE_MODE)', 1)
+        self.tcl.call('lab_arm_cdc_slow')
+        self.check_core('ila_slow', 768)
+
+    def test_immediate_capture_with_fixed_controls(self):
+        for name in ('ila_fast', 'ila_slow', 'system_ila'):
+            core = self.tcl.call('lab_ila',name)
+            for key in ('CONTROL.CAPTURE_MODE', 'CONTROL.WINDOW_COUNT', 'CONTROL.DATA_DEPTH'):
+                self.tcl.setvar(f'readonly({core},{key})', 1)
+            self.assertEqual(self.tcl.call('lab_capture_now', name), 'data_'+core)
+            self.assertEqual(self.tcl.getvar('displayed'), 'data_'+core)
+
+    def test_writable_control_is_changed_when_needed(self):
+        core = self.tcl.call('lab_ila','ila_fast')
+        self.tcl.setvar(f'props({core},CONTROL.CAPTURE_MODE)', 'BASIC')
+        self.tcl.call('lab_set_control', core, 'CONTROL.CAPTURE_MODE', 'ALWAYS')
+        self.assertEqual(self.prop(core,'CONTROL.CAPTURE_MODE'), 'ALWAYS')
+
+    def test_readonly_conflicting_value_still_fails(self):
+        core = self.tcl.call('lab_ila','ila_slow')
+        self.tcl.setvar(f'props({core},CONTROL.CAPTURE_MODE)', 'BASIC')
+        self.tcl.setvar(f'readonly({core},CONTROL.CAPTURE_MODE)', 1)
+        with self.assertRaisesRegex(tkinter.TclError, 'read-only'):
+            self.tcl.call('lab_set_control', core, 'CONTROL.CAPTURE_MODE', 'ALWAYS')
+        self.assertFalse(self.tcl.getvar('armed'))
 
     def test_invalid_recipe_does_not_arm(self):
         for args in [('lab_arm_fault',0), ('lab_arm_fault',7), ('lab_arm_fault',5,'wrong'), ('lab_arm_system','wrong')]:

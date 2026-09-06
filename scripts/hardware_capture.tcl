@@ -13,12 +13,18 @@ proc lab_ila {name} {
   if {[llength $found] != 1} {error "Expected one $name core; refresh the device and associate the matching debug_lab.ltx"}
   return [lindex $found 0]
 }
+proc lab_set_control {ila property value} {
+  # Fixed controls can be read-only even when they already have the required value.
+  if {[get_property $property $ila] ne $value} {
+    set_property $property $value $ila
+  }
+}
 proc lab_capture_setup {ila} {
   reset_hw_ila $ila
-  set_property CONTROL.CAPTURE_MODE ALWAYS $ila
-  set_property CONTROL.TRIGGER_POSITION 0 $ila
-  set_property CONTROL.WINDOW_COUNT 1 $ila
-  set_property CONTROL.DATA_DEPTH 1024 $ila
+  lab_set_control $ila CONTROL.CAPTURE_MODE ALWAYS
+  lab_set_control $ila CONTROL.TRIGGER_POSITION 0
+  lab_set_control $ila CONTROL.WINDOW_COUNT 1
+  lab_set_control $ila CONTROL.DATA_DEPTH 1024
 }
 proc lab_show_capture {{name ila_fast}} {
   set ila [lab_ila $name]
@@ -39,8 +45,8 @@ proc lab_capture_now {{name ila_fast}} {
 proc lab_arm_error {} {
   set ila [lab_ila ila_fast]
   lab_capture_setup $ila
-  set_property CONTROL.TRIGGER_POSITION 256 $ila
-  set_property CONTROL.TRIGGER_CONDITION AND $ila
+  lab_set_control $ila CONTROL.TRIGGER_POSITION 256
+  lab_set_control $ila CONTROL.TRIGGER_CONDITION AND
   set probes [get_hw_probes -of_objects $ila]
   set flags {}
   foreach probe $probes {

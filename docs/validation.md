@@ -17,8 +17,8 @@ Tool versions: Vivado/XSim **2026.1**, Python **3.12.10**, Tk **8.6** on Windows
   initial state and a UART identity response.
 - Fourteen Python host tests cover the protocol and GUI command ordering,
   polling, disconnects and error handling. The GUI preview is illustrative data.
-- Five Tcl recipe tests check event/sticky masks, CDC completion, System ILA
-  recipes and invalid/missing probe handling against the supplied LTX. Both
+- Nine Tcl recipe tests check event/sticky masks, CDC completion, System ILA
+  recipes, invalid/missing probes and read-only capture controls against the supplied LTX. Both
   capture scripts load in Vivado 2026.1.
 
 Run the simulation and host commands listed in the [README](../README.md). Run

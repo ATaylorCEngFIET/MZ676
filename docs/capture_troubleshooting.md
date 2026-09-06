@@ -86,3 +86,11 @@ connected FPGA is still required to validate real arming, upload and display.
 References: [AMD debug-core clocking guidelines](https://docs.amd.com/r/2023.1-English/ug908-vivado-programming-debugging/Debug-Cores-Clocking-Guidelines),
 [run_hw_ila](https://docs.amd.com/r/2024.1-English/ug835-vivado-tcl-commands/run_hw_ila),
 [wait_on_hw_ila](https://docs.amd.com/r/2023.1-English/ug835-vivado-tcl-commands/wait_on_hw_ila).
+
+## Read-only capture mode
+
+If an older helper reports `CONTROL.CAPTURE_MODE is read-only`, pull the current
+scripts and source `scripts/ila_recipes.tcl` again in Vivado. Some ILA configurations
+fix this property at `ALWAYS`. The helper now reads each control before writing it
+and leaves an already-correct value alone. A conflicting value still produces an
+error. This script update does not require a new bitstream.

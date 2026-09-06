@@ -114,7 +114,7 @@ all-cycle capture, arm, then restart. The simpler `lab_arm_fault 4` needs no TSM
 
 Probe names and widths are checked against the shipped Arty LTX. Automated Tcl
 control-flow tests check compare masks, active-mode matching, reset/capture setup,
-core selection and arm operations. The scripts also load in Vivado 2026.1. Physical
+core selection, read-only capture settings and arm operations. The scripts also load in Vivado 2026.1. Physical
 trigger execution and waveform display remain untested without a connected FPGA.
 
 See [capture troubleshooting](capture_troubleshooting.md) if immediate capture fails.

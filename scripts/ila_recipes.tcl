@@ -26,8 +26,8 @@ proc lab_compare_bits {width pairs} {
 proc lab_recipe_setup {name position} {
   set ila [lab_ila $name]
   lab_capture_setup $ila
-  set_property CONTROL.TRIGGER_POSITION $position $ila
-  set_property CONTROL.TRIGGER_CONDITION AND $ila
+  lab_set_control $ila CONTROL.TRIGGER_POSITION $position
+  lab_set_control $ila CONTROL.TRIGGER_CONDITION AND
   return $ila
 }
 proc lab_arm_fault {mode {kind event}} {
