@@ -34,7 +34,7 @@ Native slow ILA has one 64-bit probe: bits 31:0 destination event count, 32 loca
 
 ## 1. It works until backpressure arrives
 
-Keep 16 words/packet and 48 stalled cycles per 64 clocks. Trigger fast probe 0 bit 14 (stability event), or the source interface's protocol-checker violation. In the preceding cycles TVALID stays high and TREADY is low, but TDATA changes. The source counter's faulty enable is TVALID alone; the healthy enable includes TREADY. Sequence mismatches appear at the sink later.
+Keep 16 words/packet and 48 stalled cycles per 64 clocks. Trigger fast probe 0 bit 14 (stability event). Use `lab_arm_system source_stall` to capture the bus directly; the optional protocol-checker violation trigger depends on its assertion output. In the preceding cycles TVALID stays high and TREADY is low, but TDATA changes. The source counter's faulty enable is TVALID alone; the healthy enable includes TREADY. Sequence mismatches appear at the sink later.
 
 Article lesson: trigger close to the causal violation. A downstream data-error trigger may be many transfers later. Capture stalled cycles; transaction-only storage qualification would discard the critical evidence.
 

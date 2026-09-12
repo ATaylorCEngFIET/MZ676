@@ -127,7 +127,7 @@ specific faulty mode and error condition.
 
 ```tcl
 lab_arm_fault 1
-lab_arm_system source_violation
+lab_arm_system source_stall
 ```
 
 Click Apply + restart.
@@ -143,7 +143,7 @@ lab_show_capture system_ila
 
 - In System ILA **SLOT_0_AXIS**, TVALID stays high and TREADY is low, but **TDATA
   changes on successive stalled clocks**. The source counter is advancing without
-  a transfer. Inspect the clocks preceding the protocol-checker assertion.
+  a transfer. Inspect the stalled clocks at and after the trigger.
 - Fast probe 0 **bit 14** asserts: source payload changed after a stalled cycle.
   **Bit 22** latches that error; bit 1 becomes the overall sticky-error flag.
 - At the FIFO output, accepted data later skips values because words were advanced
@@ -151,8 +151,18 @@ lab_show_capture system_ila
 - GUI messages: **Payload changed while stalled** and **Data sequence mismatch**.
   Expected preset error bitmap: **0x05**.
 
-For a simpler bus trigger, repeat the run with `lab_arm_system source_stall`.
-This captures a stall in both healthy and faulty modes, making a useful comparison.
+This direct handshake trigger works for the healthy comparison as well. It does
+not depend on the protocol checker's `pc_asserted` output. The separate
+`lab_arm_system source_violation` recipe can wait indefinitely if that output
+never asserts; use it as an additional checker investigation, not the first capture.
+
+If the System ILA still waits, confirm the GUI says Running in mode 1 with 48/64
+stalls, then try `lab_capture_now system_ila` while the experiment runs. This
+replaces the waiting trigger and opens an immediate waveform. If immediate capture
+works, inspect SLOT_0_AXIS TVALID/TREADY and the active trigger settings. If it
+fails, troubleshoot capture transport and clocks. Check whether the native ILA
+triggers and the GUI reports the expected errors; these are independent evidence
+of whether the fault actually ran.
 
 **Healthy comparison:** select mode 0 with the same stalls. TDATA/TLAST remain
 stable while waiting; the data counter advances only on an accepted input beat.
