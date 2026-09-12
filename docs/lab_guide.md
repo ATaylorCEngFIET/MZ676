@@ -2,6 +2,8 @@
 
 Runnable setup commands are in [the Tcl recipe guide](ila_tcl_recipes.md) and `scripts/ila_recipes.tcl`.
 
+For complete GUI settings, arm/display commands and expected waveforms, see [the run guide](run_lab.md).
+
 ## Common procedure
 
 1. Program the board's matching bitstream and load its LTX.

@@ -4,6 +4,8 @@ A MicroZed Chronicles demonstration with an **IP Integrator top level, VHDL cust
 
 ![GUI preview with illustrative data](docs/gui_preview.png)
 
+For step-by-step hardware runs and the waveform signature of each fault, use [the debug lab run guide](docs/run_lab.md).
+
 ## Start here
 
 ```powershell
