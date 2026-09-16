@@ -8,12 +8,29 @@ if {$stage eq ""} {set stage project}
 if {$stage ni {project synth bitstream}} {error "Stage must be project, synth or bitstream"}
 if {$board eq "arty_s7_50"} {
   set part xc7s50csga324-1; set input_mhz 12.0; set clock_type Single_ended_clock_capable_pin
+} elseif {$board eq "arty_s7_25"} {
+  # Same PCB/pinout as arty_s7_50, smaller die (xc7s25 vs xc7s50) -- identical
+  # clock source and constraints file shape, just a different -part.
+  set part xc7s25csga324-1; set input_mhz 12.0; set clock_type Single_ended_clock_capable_pin
 } elseif {$board eq "sp701"} {
   set part xc7s100fgga676-2; set input_mhz 33.333333
   if {[llength $argv] >= 3} {set input_mhz [lindex $argv 2]}
   if {![string is double -strict $input_mhz] || $input_mhz < 10 || $input_mhz > 450} {error "Invalid Si570 input frequency"}
   set clock_type Differential_clock_capable_pin
-} else {error "Board must be arty_s7_50 or sp701"}
+} else {error "Board must be arty_s7_50, arty_s7_25 or sp701"}
+# xc7s25 (14600 LUTs/29200 FFs) is roughly half of xc7s50 and a fifth of
+# xc7s100 -- the debug cores' advanced/qualified triggering (C_ADV_TRIGGER,
+# C_EN_STRG_QUAL) each add substantial per-bit comparator logic, which is what
+# actually made place_design fail to commit all instances here (81%/61%
+# LUT/FF at default synth, BRAM only at 31% so storage depth was never the
+# constraint -- and system_ila's C_DATA_DEPTH floor is 1024 anyway, so depth
+# isn't a lever here at all). Trade comparator flexibility for basic
+# triggering on this board only; arty_s7_50/sp701 keep the full feature set
+# since they have the headroom for it.
+set ila_light [expr {$board eq "arty_s7_25"}]
+set ila_depth 1024
+set ila_adv_trigger [expr {$ila_light ? "false" : "true"}]
+set ila_strg_qual [expr {$ila_light ? 0 : 1}]
 # Generated project and implementation outputs.
 set out [file join $root build ipi_$board]
 file mkdir $out
@@ -42,7 +59,7 @@ set z2 [constant zero2 2 0]
 set ones4 [constant ones4 4 15]
 set clock [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz:6.0 clocks]
 set_property -dict [list CONFIG.PRIM_IN_FREQ $input_mhz CONFIG.PRIM_SOURCE $clock_type CONFIG.CLKOUT1_REQUESTED_OUT_FREQ 50.0 CONFIG.CLKOUT2_USED true CONFIG.CLKOUT2_REQUESTED_OUT_FREQ 12.5 CONFIG.USE_RESET false CONFIG.USE_LOCKED true] $clock
-if {$board eq "arty_s7_50"} {
+if {$board in {arty_s7_50 arty_s7_25}} {
   connect_bd_net [create_bd_port -dir I -type clk -freq_hz [expr {int($input_mhz*1e6)}] clk_in] [get_bd_pins clocks/clk_in1]
 } else {
   foreach suffix {p n} {connect_bd_net [create_bd_port -dir I -type clk -freq_hz [expr {int($input_mhz*1e6)}] clk_in_$suffix] [get_bd_pins clocks/clk_in1_$suffix]}
@@ -79,7 +96,7 @@ net experiment/fifo_resetn stream_fifo/s_axis_aresetn
 connect_bd_intf_net [get_bd_intf_pins experiment/M_AXIS] [get_bd_intf_pins stream_fifo/S_AXIS]
 connect_bd_intf_net [get_bd_intf_pins stream_fifo/M_AXIS] [get_bd_intf_pins experiment/S_AXIS]
 set sys [create_bd_cell -type ip -vlnv xilinx.com:ip:system_ila:1.1 system_ila]
-set_property -dict [list CONFIG.C_NUM_MONITOR_SLOTS 3 CONFIG.C_SLOT_0_INTF_TYPE xilinx.com:interface:axis_rtl:1.0 CONFIG.C_SLOT_1_INTF_TYPE xilinx.com:interface:axis_rtl:1.0 CONFIG.C_SLOT_2_INTF_TYPE xilinx.com:interface:aximm_rtl:1.0 CONFIG.C_SLOT_0_APC_EN 1 CONFIG.C_SLOT_1_APC_EN 1 CONFIG.C_SLOT_2_APC_EN 1 CONFIG.C_SLOT_0_AXIS_TDATA_WIDTH 32 CONFIG.C_SLOT_1_AXIS_TDATA_WIDTH 32 CONFIG.C_SLOT_2_AXI_PROTOCOL AXI4LITE CONFIG.C_SLOT_2_AXI_DATA_WIDTH 32 CONFIG.C_SLOT_2_AXI_ADDR_WIDTH 32 CONFIG.C_DATA_DEPTH 1024 CONFIG.C_EN_STRG_QUAL 1 CONFIG.C_ADV_TRIGGER 1] $sys
+set_property -dict [list CONFIG.C_NUM_MONITOR_SLOTS 3 CONFIG.C_SLOT_0_INTF_TYPE xilinx.com:interface:axis_rtl:1.0 CONFIG.C_SLOT_1_INTF_TYPE xilinx.com:interface:axis_rtl:1.0 CONFIG.C_SLOT_2_INTF_TYPE xilinx.com:interface:aximm_rtl:1.0 CONFIG.C_SLOT_0_APC_EN 1 CONFIG.C_SLOT_1_APC_EN 1 CONFIG.C_SLOT_2_APC_EN 1 CONFIG.C_SLOT_0_AXIS_TDATA_WIDTH 32 CONFIG.C_SLOT_1_AXIS_TDATA_WIDTH 32 CONFIG.C_SLOT_2_AXI_PROTOCOL AXI4LITE CONFIG.C_SLOT_2_AXI_DATA_WIDTH 32 CONFIG.C_SLOT_2_AXI_ADDR_WIDTH 32 CONFIG.C_DATA_DEPTH $ila_depth CONFIG.C_EN_STRG_QUAL $ila_strg_qual CONFIG.C_ADV_TRIGGER $ila_adv_trigger] $sys
 connect_bd_net $fast [get_bd_pins $sys/clk]
 net experiment/fifo_resetn system_ila/resetn
 connect_bd_intf_net [get_bd_intf_pins experiment/M_AXIS] [get_bd_intf_pins $sys/SLOT_0_AXIS]
@@ -102,14 +119,14 @@ connect_bd_net $z32 [get_bd_pins $sys/SLOT_2_AXI_rdata]
 connect_bd_net $zero [get_bd_pins $sys/SLOT_2_AXI_rvalid]
 connect_bd_net $one [get_bd_pins $sys/SLOT_2_AXI_arready]
 set native [create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_fast]
-set_property -dict [list CONFIG.C_MONITOR_TYPE Native CONFIG.C_NUM_OF_PROBES 6 CONFIG.C_DATA_DEPTH 1024 CONFIG.C_ADV_TRIGGER true CONFIG.C_EN_STRG_QUAL 1] $native
+set_property -dict [list CONFIG.C_MONITOR_TYPE Native CONFIG.C_NUM_OF_PROBES 6 CONFIG.C_DATA_DEPTH $ila_depth CONFIG.C_ADV_TRIGGER $ila_adv_trigger CONFIG.C_EN_STRG_QUAL $ila_strg_qual] $native
 connect_bd_net $fast [get_bd_pins $native/clk]
 for {set i 0} {$i < 6} {incr i} {
   set_property CONFIG.C_PROBE${i}_WIDTH 32 $native
   net experiment/native$i ila_fast/probe$i
 }
 set slow_ila [create_bd_cell -type ip -vlnv xilinx.com:ip:ila:6.2 ila_slow]
-set_property -dict [list CONFIG.C_MONITOR_TYPE Native CONFIG.C_NUM_OF_PROBES 1 CONFIG.C_PROBE0_WIDTH 64 CONFIG.C_DATA_DEPTH 1024] $slow_ila
+set_property -dict [list CONFIG.C_MONITOR_TYPE Native CONFIG.C_NUM_OF_PROBES 1 CONFIG.C_PROBE0_WIDTH 64 CONFIG.C_DATA_DEPTH $ila_depth] $slow_ila
 connect_bd_net $slow [get_bd_pins $slow_ila/clk]
 net experiment/slow_debug ila_slow/probe0
 # AMD counter, slice and concatenate IP drive the four front-panel LEDs.
@@ -153,6 +170,12 @@ if {$stage ne "project"} {
   report_utilization -file [file join $out utilization_synth.rpt]
   report_cdc -file [file join $out cdc.rpt]
   if {$stage eq "bitstream"} {
+    # arty_s7_25 packs this design far denser than the xc7s50/xc7s100 boards
+    # this project was written for (81%/61% LUT/FF at default effort) -- the
+    # default placer directive fails to commit all instances; Explore tries
+    # harder (slower, more thorough) and succeeds where default congestion
+    # handling does not.
+    set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE Explore [get_runs impl_1]
     launch_runs impl_1 -to_step write_bitstream -jobs 4
     wait_on_run impl_1
     if {[get_property PROGRESS [get_runs impl_1]] ne "100%"} {error "Implementation failed"}
